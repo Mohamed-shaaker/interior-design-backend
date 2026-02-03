@@ -1,0 +1,23 @@
+Python cache
+
+pycache/
+*.py[cod]
+*$py.class
+
+Environment
+
+.venv/
+env/
+venv/
+ENV/
+
+Database / Local Secrets
+
+*.db
+.env
+create_admin.py
+
+IDEs
+
+.vscode/
+.idea/
