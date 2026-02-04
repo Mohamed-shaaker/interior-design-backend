@@ -1,18 +1,23 @@
 import os
 from datetime import datetime
+from dotenv import load_dotenv
 from sqlalchemy import DateTime
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.sql import func
 
-# 1. The Connection String (Now Cloud-Ready)
-# Locally, it uses your Postgres. In production, it looks for an Environment Variable.
+# Load the .env file if it exists
+load_dotenv()
+
+# 1. The Connection String
+# This looks for 'DATABASE_URL' in your .env file or Render environment variables.
+# The second string is just a generic fallback that won't work without a real password.
 DATABASE_URL = os.getenv(
     "DATABASE_URL", 
-    "postgresql+asyncpg://postgres:982060@localhost:5432/interior_design_db"
+    "postgresql+asyncpg://postgres:placeholder@localhost:5432/interior_design_db"
 )
 
-# Fix for Render/Railway: They often provide 'postgres://', but SQLAlchemy needs 'postgresql+asyncpg://'
+# Fix for Cloud Providers (Render/Supabase)
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
 elif DATABASE_URL.startswith("postgresql://") and "+asyncpg" not in DATABASE_URL:
@@ -21,7 +26,7 @@ elif DATABASE_URL.startswith("postgresql://") and "+asyncpg" not in DATABASE_URL
 # 2. The Engine
 engine = create_async_engine(
     DATABASE_URL,
-    echo=False, # Set to False in production to keep logs clean
+    echo=False, 
     future=True
 )
 
