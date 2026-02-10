@@ -1,60 +1,37 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.modules.auth.schemas import UserCreate, UserResponse
-from src.modules.auth.service import AuthService
-from src.api.dependencies import get_db
-from src.core.security import create_access_token
-from datetime import timedelta
+from src.database import get_supabase
+from supabase import Client
 
-# Create the router with a prefix to keep main.py clean
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register_user(
-    user_in: UserCreate, 
-    db: AsyncSession = Depends(get_db)
-):
+@router.post("/register")
+def register(email: str, password: str, supabase: Client = Depends(get_supabase)):
     """
-    Endpoint to register a new admin or user.
-    Calls the AuthService to handle hashing and database persistence.
+    Register a new user using the Supabase Auth Bridge.
     """
-    auth_service = AuthService(db)
     try:
-        return await auth_service.register_new_user(user_in)
+        # This handles the hashing and storage for you!
+        auth_response = supabase.auth.sign_up({
+            "email": email, 
+            "password": password
+        })
+        return {"message": "Registration successful", "user": auth_response.user}
     except Exception as e:
-        # If the user already exists, the service raises an exception
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail=str(e)
-        )
+        raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/token")
-async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db)
-):
+@router.post("/login")
+def login(email: str, password: str, supabase: Client = Depends(get_supabase)):
     """
-    The standard login endpoint.
-    It receives 'username' and 'password' from the login form,
-    verifies them, and returns a JWT access token.
+    Login via the HTTPS Bridge.
     """
-    auth_service = AuthService(db)
-    
-    # form_data.username is used by OAuth2 standards (we treat it as email)
-    user = await auth_service.authenticate_user(form_data.username, form_data.password)
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # Create the digital 'key card' (Token)
-    access_token = create_access_token(data={"sub": user.email})
-    
-    return {
-        "access_token": access_token, 
-        "token_type": "bearer"
-    }
+    try:
+        auth_response = supabase.auth.sign_in_with_password({
+            "email": email,
+            "password": password
+        })
+        return {
+            "access_token": auth_response.session.access_token,
+            "token_type": "bearer"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid email or password")

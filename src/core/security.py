@@ -2,21 +2,27 @@ import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import jwt
-from passlib.context import CryptContext
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 
 # Configuration
-# NEVER hardcode the real secret key. We use a fallback for local dev only.
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-do-not-use-in-production-12345")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # 24 hours for convenience during dev
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Initialize Argon2 Hasher
+ph = PasswordHasher()
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verifies a password using Argon2"""
+    try:
+        return ph.verify(hashed_password, plain_password)
+    except VerifyMismatchError:
+        return False
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
+def get_password_hash(password: str) -> str:
+    """Hashes a password using Argon2"""
+    return ph.hash(password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()

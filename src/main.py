@@ -1,52 +1,39 @@
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.database import engine, Base
+
+# --- ROUTER IMPORTS ---
 from src.modules.leads.router import router as leads_router
 from src.modules.auth.router import router as auth_router
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Context manager for startup/shutdown events.
-    This runs once when the server starts and once when it stops.
-    """
-    print("Startup: Creating database tables...")
-    async with engine.begin() as conn: 
-        # This line automatically creates tables in Postgres based on your Models
-        await conn.run_sync(Base.metadata.create_all)
-    print("Startup: Tables created successfully.")
-    
-    yield
-    
-    print("Shutdown: Closing database connection...")
-    await engine.dispose()
-
-# --- CRITICAL: These lines MUST be at the very edge (Zero Indentation) ---
-# This makes the 'app' variable visible to the Uvicorn server.
+# NOTE: If ai_router still uses 'get_db', the app might crash. 
+# We can comment it out temporarily if you haven't fixed src/modules/ai/router.py yet.
+from src.modules.ai.router import router as ai_router
 
 app = FastAPI(
     title="Interior Design API",
-    version="1.0.0",
-    lifespan=lifespan
+    # We removed 'lifespan' because we don't need to check DB connections on startup anymore.
+    # The 'Bridge' connects automatically when a request is made.
 )
 
-# --- CORS CONFIGURATION (The Bridge) ---
-# This allows your local HTML file (usually on port 5500) to talk to port 8000
-origins = [
-    "http://localhost:5500",
-    "http://127.0.0.1:5500",
-    "*" # For development, allows any connection
-]
-
+# --- CORS MIDDLEWARE ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Registering our domain modules
-app.include_router(leads_router)
+# --- REGISTER ROUTERS ---
+# Since your routers (like leads_router) already have prefix="/leads" inside them,
+# we don't need to add it again here, or we'd get "/leads/leads/..."
 app.include_router(auth_router)
+app.include_router(leads_router)
+app.include_router(ai_router)
+
+@app.get("/")
+async def root():
+    return {
+        "status": "online", 
+        "message": "Backend is Running via HTTPS Bridge 🌉",
+        "docs": "/docs"
+    }
