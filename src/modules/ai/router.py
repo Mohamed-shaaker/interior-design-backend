@@ -1,7 +1,7 @@
 import os
 import google.generativeai as genai
 from fastapi import APIRouter, Depends, HTTPException
-from src.database import get_supabase
+from src.core.supabase import get_supabase
 from supabase import Client
 # from src.modules.auth.service import get_current_active_user 
 from pydantic import BaseModel
@@ -26,8 +26,12 @@ async def analyze_design(
     try:
         # 1. Ask Gemini for Intelligence
         prompt = (
-            f"Act as an Interior Designer. Summarize this request in one sentence "
-            f"and suggest a style (e.g., Modern, Bohemian). Request: {request.description}"
+            "You are an expert Interior Designer. Analyze the following request and "
+    "return a response with these sections: \n"
+            "1. STYLE: Recommended interior style.\n"
+            "2. COLOR: A 3-color palette.\n"
+            "3. TIP: One pro furniture layout tip.\n"
+           f"Request: {request.description}"
         )
         response = model.generate_content(prompt)
         ai_text = response.text.strip()
