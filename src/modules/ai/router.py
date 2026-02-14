@@ -1,53 +1,46 @@
 import os
-import google.generativeai as genai
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from src.core.supabase import get_supabase
 from supabase import Client
-# from src.modules.auth.service import get_current_active_user 
 from pydantic import BaseModel
 
-router = APIRouter()
-
-# Setup Gemini
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash')
+router = APIRouter(prefix="/ai", tags=["AI"])
 
 class DesignRequest(BaseModel):
     client_name: str
     description: str
 
 @router.post("/analyze")
-async def analyze_design(
-    request: DesignRequest, 
-    supabase: Client = Depends(get_supabase)
-    # current_user = Depends(get_current_active_user) # Keep commented until auth is verified
-):
-    """Uses Gemini to summarize design needs and saves to Supabase via Bridge."""
+async def analyze_design(request: DesignRequest, supabase: Client = Depends(get_supabase)):
+    api_key = os.getenv("GEMINI_API_KEY")
+    # Using the stable v1 URL to ensure no more 404s
+    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
+    
     try:
-        # 1. Ask Gemini for Intelligence
-        prompt = (
-            "You are an expert Interior Designer. Analyze the following request and "
-    "return a response with these sections: \n"
-            "1. STYLE: Recommended interior style.\n"
-            "2. COLOR: A 3-color palette.\n"
-            "3. TIP: One pro furniture layout tip.\n"
-           f"Request: {request.description}"
-        )
-        response = model.generate_content(prompt)
-        ai_text = response.text.strip()
+        # 1. The Design Brain Instructions
+        prompt = f"You are a Senior Interior Designer. Analyze this: {request.description}. Provide STYLE, PALETTE, and one TIP."
+        
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
 
-        # 2. Save result to Supabase using the HTTPS Bridge
-        analysis_data = {
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, json=payload, timeout=20.0)
+            
+            if response.status_code != 200:
+                return {"error": "Google API Error", "details": response.json()}
+
+            data = response.json()
+            ai_text = data['candidates'][0]['content']['parts'][0]['text']
+
+        # 2. Save to Supabase
+        # Note: Ensure your table is named 'design_analyses'
+        supabase.table("design_analyses").insert({
             "client_name": request.client_name,
             "description": request.description,
-            "ai_summary": ai_text,
-            "suggested_style": "AI Generated" 
-        }
-        
-        # This replaces the SQLAlchemy session code
-        db_response = supabase.table("design_analyses").insert(analysis_data).execute()
+            "ai_summary": ai_text
+        }).execute()
 
-        return {"status": "success", "analysis": ai_text, "data": db_response.data}
+        return {"status": "success", "analysis": ai_text}
+
     except Exception as e:
-        print(f"AI Router Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

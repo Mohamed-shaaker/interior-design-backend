@@ -1,52 +1,27 @@
-Interior Design Studio Portal
+# Intelligence Hub-V1: AI Interior Design Engine
 
-A professional full-stack web application designed for interior design studios to manage client inquiries (leads) through a secure, high-performance architecture.
+A production-ready FastAPI backend that transforms raw client descriptions into expert interior design consultations using the Gemini 1.5 Flash Intelligence model.
 
-Features
+## 🚀 Features
 
-Lead Generation: Modern, responsive landing page with an asynchronous contact form.
+- **Designer Brain**: Integrated Gemini 1.5 Flash for professional style analysis.
+- **Secure Cloud Bridge**: Migrated from local storage to Supabase Cloud using asymmetric security.
+- **Intelligence Hub Spec**: Unified architecture for handling leads, auth, and AI in one modular system.
+- **Production Spec**: Optimized for deployment on Render and integration with Vercel frontends.
 
-Admin Dashboard: Secure area to view and manage project inquiries.
+## 🛠️ Tech Stack
 
-JWT Authentication: Robust security using JSON Web Tokens and password hashing (Bcrypt).
+- **Engine**: FastAPI (Python 3.13+)
+- **Intelligence**: Google Gemini 1.5 Flash
+- **Cloud Database**: Supabase (PostgreSQL)
+- **Security**: Asymmetric JWT (ES256) & Argon2-cffi
 
-Async Architecture: Powered by FastAPI and SQLAlchemy 2.0 for high concurrency.
+## 📦 Installation
 
-PostgreSQL Integration: Reliable data persistence for all client leads and user data.
-
-Tech Stack
-
-Backend: Python (FastAPI)
-
-Database: PostgreSQL + SQLAlchemy (Async)
-
-Security: OAuth2 with Password Bearer, JWT
-
-Frontend: HTML5, CSS3, JavaScript (Fetch API)
-
-Installation & Setup
-
-Clone the repository:
-
-git clone [https://github.com/Mohamed-shaaker/interior-design-backend.git](https://github.com/Mohamed-shaaker/interior-design-backend.git)
-
-Setup Virtual Environment:
-
-python -m venv .venv
-source .venv/Scripts/activate
-
-Install Dependencies:
-
-pip install -r requirements.txt
-
-Environment Configuration:
-
-Update DATABASE_URL in src/database.py with your credentials.
-
-Run the Server:
-
-python -m uvicorn src.main:app --reload
-
-Security Note
-
-This project uses industry-standard hashing. Ensure you change the SECRET_KEY in src/core/security.py before deploying to a production environment.
+1. **Clone & Setup**:
+   ```bash
+   git clone [https://github.com/Mohamed-shaaker/interior-design-backend.git](https://github.com/Mohamed-shaaker/interior-design-backend.git)
+   python -m venv .venv
+   source .venv/Scripts/activate
+   pip install -r requirements.txt
+   ```

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from src.database import get_supabase
+from src.core.supabase import get_supabase
 from supabase import Client
 
 router = APIRouter(prefix="/auth", tags=["Auth"])

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from src.modules.leads.schemas import LeadCreate, LeadResponse
-from src.database import get_supabase 
+from src.core.supabase import get_supabase
 from supabase import Client
 
 # Note: We removed 'LeadService' and 'get_db' because they use the blocked connection.
