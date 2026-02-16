@@ -10,8 +10,7 @@ from src.modules.ai.router import router as ai_router
 
 app = FastAPI(
     title="Interior Design API",
-    # We removed 'lifespan' because we don't need to check DB connections on startup anymore.
-    # The 'Bridge' connects automatically when a request is made.
+   
 )
 
 # --- CORS MIDDLEWARE ---
@@ -24,8 +23,7 @@ app.add_middleware(
 )
 
 # --- REGISTER ROUTERS ---
-# Since your routers (like leads_router) already have prefix="/leads" inside them,
-# we don't need to add it again here, or we'd get "/leads/leads/..."
+
 app.include_router(auth_router)
 app.include_router(leads_router)
 app.include_router(ai_router)

@@ -16,5 +16,5 @@ argon2-cffi
 
 # --- AI & Cloud Bridge ---
 google-generativeai
-supabase==2.4.0
+supabase==2.11.0
 httpx
